@@ -1,0 +1,326 @@
+{% extends 'recipes/base.html' %}
+
+{% block content %}
+  <div class="row justify-content-center">
+  <div class="col-md-10">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title mb-3">Añadir / Editar receta</h3>
+
+        <div id="nonFieldErrors" class="alert alert-danger d-none"></div>
+
+        <form id="recipeForm" method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% if form.instance and form.instance.pk %}
+            <input type="hidden" name="pk" value="{{ form.instance.pk }}">
+          {% endif %}
+          <div class="row g-3">
+            <div class="col-md-8">
+              <div class="mb-3">
+                <label class="form-label">Título</label>
+                {{ form.title }}
+                <div class="invalid-feedback" id="error-title"></div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">Tiempo estimado</label>
+                <div class="input-group">
+                  {{ form.estimated_time }}
+                  <span class="input-group-text">min</span>
+                </div>
+                <div class="invalid-feedback" id="error-estimated_time"></div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                {{ form.description }}
+                <div class="invalid-feedback" id="error-description"></div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="mb-3">
+                <label class="form-label">Preparación</label>
+                {{ form.preparation }}
+                <div class="invalid-feedback" id="error-preparation"></div>
+              </div>
+            </div>
+
+            <div class="col-md-8">
+              <div class="mb-3">
+                <label for="id_ingredients_text" class="form-label">Ingredientes (separados por comas)</label>
+                <input id="id_ingredients_text" name="ingredients_text" class="form-control" value="{{ form.initial.ingredients_text }}">
+                <div class="invalid-feedback" id="error-ingredients_text"></div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">Imagen</label>
+                {{ form.image }}
+                <div class="invalid-feedback" id="error-image"></div>
+              </div>
+
+              <div class="mb-3">
+                <div class="border rounded p-2 bg-white d-flex align-items-center justify-content-center image-placeholder">
+                  <img id="imagePreview" src="" alt="Vista previa" class="img-fluid d-none image-preview" {% if form.instance and form.instance.image %} data-initial="{{ form.instance.image.url }}" {% endif %} />
+                  <div id="imagePlaceholder" class="text-muted text-center">
+                    <i class="bi bi-image icon-lg"></i>
+                    <div class="small">Sin imagen seleccionada</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              {% if formset %}
+              <div class="card mb-3">
+                <div class="card-body">
+                  <h5 class="card-title">Pasos (opcional)</h5>
+                  {{ formset.management_form }}
+                  <div class="mb-2">
+                    <button id="addStepBtn" type="button" class="btn btn-sm btn-outline-secondary">➕ Añadir paso</button>
+                  </div>
+                    <div class="steps-list">
+                    {% for f in formset.forms %}
+                      <div class="mb-3 border rounded p-2">
+                        {# renderizar campos ocultos (id, DELETE, etc.) para que formset valide instancias existentes #}
+                        {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+                        {{ f.id }}
+                        {{ f.DELETE }}
+                        {% if f.instance and f.instance.pk %}
+                          <input type="hidden" name="{{ f.prefix }}-id" value="{{ f.instance.pk }}">
+                        {% endif %}
+                        <div class="row g-2">
+                          <div class="col-md-2">
+                            {{ f.order.label_tag }}
+                            {{ f.order }}
+                          </div>
+                          <div class="col-md-7">
+                            {{ f.description.label_tag }}
+                            {{ f.description }}
+                          </div>
+                          <div class="col-md-3">
+                            {{ f.image.label_tag }}
+                            {{ f.image }}
+                            <div class="step-image-preview mt-2"></div>
+                          </div>
+                        </div>
+                        {% if f.DELETE %}
+                          <div class="form-check mt-2">
+                            {{ f.DELETE }} <label class="form-check-label">Eliminar</label>
+                          </div>
+                        {% endif %}
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div id="empty-form" class="d-none">{{ formset.empty_form.as_p|safe }}</div>
+                </div>
+              </div>
+              {% endif %}
+
+              <div class="d-grid">
+                <button id="submitBtn" class="btn btn-primary btn-lg" type="submit"><span id="submitLabel">Guardar receta</span></button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Imagen inicial y vista previa al seleccionar fichero
+  (function(){
+    const input = document.querySelector('#recipeForm input[type="file"][name="image"]');
+    const img = document.getElementById('imagePreview');
+    const placeholder = document.getElementById('imagePlaceholder');
+    let objectUrl = null;
+
+    function showImageSrc(src){
+      img.src = src;
+      img.classList.remove('d-none');
+      if(placeholder) placeholder.classList.add('d-none');
+    }
+
+    // Mostrar imagen existente al cargar (modo edición)
+    if(img && img.dataset && img.dataset.initial){
+      try{ showImageSrc(img.dataset.initial); }catch(e){ /* ignore */ }
+    }
+
+    if(!input) return;
+    input.addEventListener('change', function(e){
+      const file = this.files && this.files[0];
+      if(objectUrl){ URL.revokeObjectURL(objectUrl); objectUrl = null; }
+      if(!file){ img.classList.add('d-none'); if(placeholder) placeholder.classList.remove('d-none'); img.removeAttribute('src'); return; }
+      objectUrl = URL.createObjectURL(file);
+      showImageSrc(objectUrl);
+    });
+  })();
+</script>
+
+<script>
+  // Vista previa para imágenes de pasos (delegado)
+  (function(){
+    const form = document.getElementById('recipeForm');
+    if(!form) return;
+    form.addEventListener('change', function(e){
+      const el = e.target;
+      if(!el) return;
+      if(el.type === 'file' && el.name && el.name.indexOf('image') !== -1 && el.name.indexOf('recipe') === -1){
+        const file = el.files && el.files[0];
+        const preview = el.closest('.col-md-3')?.querySelector('.step-image-preview');
+        if(preview){
+          preview.innerHTML = '';
+          if(!file){ return; }
+          const url = URL.createObjectURL(file);
+          const img = document.createElement('img');
+          img.src = url;
+          img.className = 'img-fluid rounded';
+          img.style.maxHeight = '160px';
+          img.style.objectFit = 'cover';
+          preview.appendChild(img);
+        }
+      }
+    });
+  })();
+</script>
+
+{% if formset %}
+<script>
+  (function(){
+    const addBtn = document.getElementById('addStepBtn');
+    if(!addBtn) return;
+    const stepsList = document.querySelector('.steps-list');
+    const emptyDiv = document.getElementById('empty-form');
+    const totalInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
+    function makeNodeFromHtml(html){
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html;
+      return wrapper;
+    }
+    addBtn.addEventListener('click', function(){
+      if(!emptyDiv || !totalInput || !stepsList) return;
+      const idx = parseInt(totalInput.value, 10);
+      // partir del HTML de la plantilla y hacer reemplazos seguros
+      let templateHtml = emptyDiv.innerHTML;
+      // reemplazar los marcadores genéricos __prefix__ en todas partes
+      let html = templateHtml.replace(/__prefix__/g, idx);
+      // crear nodo DOM
+      const node = makeNodeFromHtml(html);
+      // además asegurar que atributos (name,id,for) dentro del nodo no mantengan '__prefix__' sobrante
+      const inputs = node.querySelectorAll('[name], [id], [for]');
+      inputs.forEach(el => {
+        if(el.hasAttribute('name')){
+          const v = el.getAttribute('name');
+          if(v && v.indexOf('__prefix__') !== -1){ el.setAttribute('name', v.replace(/__prefix__/g, idx)); }
+        }
+        if(el.hasAttribute('id')){
+          const v = el.getAttribute('id');
+          if(v && v.indexOf('__prefix__') !== -1){ el.setAttribute('id', v.replace(/__prefix__/g, idx)); }
+        }
+        if(el.hasAttribute('for')){
+          const v = el.getAttribute('for');
+          if(v && v.indexOf('__prefix__') !== -1){ el.setAttribute('for', v.replace(/__prefix__/g, idx)); }
+        }
+      });
+
+      const container = document.createElement('div');
+      container.className = 'mb-3 border rounded p-2';
+      container.appendChild(node);
+      stepsList.appendChild(container);
+      // incrementar el contador TOTAL_FORMS
+      totalInput.value = idx + 1;
+    });
+  })();
+</script>
+{% endif %}
+
+{% if user.is_authenticated %}
+<script>
+  (function(){
+    const form = document.getElementById('recipeForm');
+    if(!form) return;
+    const submitBtn = document.getElementById('submitBtn');
+    const submitLabel = document.getElementById('submitLabel');
+    const nonField = document.getElementById('nonFieldErrors');
+
+    function clearErrors(){
+      if(nonField){ nonField.classList.add('d-none'); nonField.innerHTML=''; }
+      const invalids = form.querySelectorAll('.is-invalid');
+      invalids.forEach(i => i.classList.remove('is-invalid'));
+      const feedbacks = form.querySelectorAll('.invalid-feedback');
+      feedbacks.forEach(f => f.textContent = '');
+    }
+
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
+      clearErrors();
+      submitBtn.disabled = true;
+      submitLabel.textContent = 'Guardando...';
+
+      const url = '{% url "recipes:save_ajax" %}';
+      const fd = new FormData(form);
+      // Depuración: registrar las claves del formulario que se envían
+      try{
+        const sent = [];
+        for(const pair of fd.entries()){ sent.push(pair[0]); }
+        console.log('FormData keys to be sent:', sent);
+      }catch(err){ console.log('Could not enumerate FormData', err); }
+
+      try{
+        const resp = await fetch(url, {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        let json = null;
+        try{ json = await resp.json(); }catch(e){ console.log('Response not JSON', e); }
+        if(resp.ok && json && json.success){
+          if(json.pk){ window.location.href = '/recipe/' + json.pk + '/'; return; }
+          window.location.reload();
+        }else{
+          // mostrar respuesta cruda para depuración
+          try{
+            const txt = await resp.text();
+            console.log('Server response text:', txt);
+            try{ const parsed = JSON.parse(txt); console.log('Parsed JSON:', parsed); json = parsed; }catch(e){ /* not json */ }
+          }catch(e){ console.error('Error reading response text', e); }
+          if(json && json.errors){
+            console.log('Server reported errors:', json.errors, 'missing_ids:', json.missing_ids || null, 'posted_keys:', json.posted_keys || null);
+            for(const key in json.errors){
+              const msgs = json.errors[key];
+              if(key === '__all__' || key === 'non_field_errors'){
+                if(nonField){ nonField.classList.remove('d-none'); nonField.innerHTML = '<ul class="mb-0">' + msgs.map(m => '<li>'+m+'</li>').join('') + '</ul>'; }
+                continue;
+              }
+              const el = form.querySelector('[name="'+key+'"]');
+              const feedback = document.getElementById('error-' + key);
+              if(el){ el.classList.add('is-invalid'); if(feedback) feedback.textContent = msgs.join(', '); }
+              else { if(nonField){ nonField.classList.remove('d-none'); nonField.innerHTML += '<div>' + key + ': ' + msgs.join(', ') + '</div>'; } }
+            }
+            // Si el servidor devolvió missing_ids o posted_keys, mostrarlos para depuración
+            if(json.missing_ids || json.posted_keys){
+              const dbg = document.getElementById('nonFieldErrors');
+              if(dbg){
+                dbg.classList.remove('d-none');
+                dbg.innerHTML += '<hr><div><strong>Debug:</strong><br>missing_ids: ' + JSON.stringify(json.missing_ids || []) + '<br>posted_keys: ' + JSON.stringify(json.posted_keys || []) + '</div>';
+              }
+            }
+          }else if(json && json.error){ if(nonField){ nonField.classList.remove('d-none'); nonField.textContent = json.error; } }
+          else { if(nonField){ nonField.classList.remove('d-none'); nonField.textContent = 'No se pudo guardar la receta.'; } }
+        }
+      }catch(err){ console.error(err); if(nonField){ nonField.classList.remove('d-none'); nonField.textContent = 'Error de red al guardar.'; } }
+      finally{ submitBtn.disabled = false; submitLabel.textContent = 'Guardar receta'; }
+    });
+  })();
+</script>
+{% endif %}
+
+{% endblock %}

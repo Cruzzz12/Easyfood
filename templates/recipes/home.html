@@ -1,0 +1,364 @@
+{% extends 'recipes/base.html' %}
+
+{% block content %}
+<style>
+  /* Estilos específicos para la página inicial */
+  .hero-section {
+    background: linear-gradient(135deg, 
+      var(--brand-bg) 0%, 
+      var(--brand-bg-2) 25%, 
+      #4f46e5 50%, 
+      #7c3aed 75%, 
+      #ec4899 100%);
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 4rem 15px;
+  }
+
+  .hero-content {
+    text-align: center;
+    z-index: 2;
+    max-width: 800px;
+    animation: fadeInUp 1s ease-out;
+  }
+
+  /* Partículas flotantes */
+  .particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .particle {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0.4;
+    animation: float 10s infinite ease-in-out;
+    pointer-events: none;
+  }
+
+  .particle:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; filter: hue-rotate(0deg); }
+  .particle:nth-child(2) { left: 80%; top: 10%; animation-delay: 1s; filter: hue-rotate(45deg); }
+  .particle:nth-child(3) { left: 20%; top: 60%; animation-delay: 2s; filter: hue-rotate(90deg); }
+  .particle:nth-child(4) { left: 70%; top: 70%; animation-delay: 3s; filter: hue-rotate(135deg); }
+  .particle:nth-child(5) { left: 90%; top: 50%; animation-delay: 4s; filter: hue-rotate(180deg); }
+  .particle:nth-child(6) { left: 5%; top: 80%; animation-delay: 5s; filter: hue-rotate(225deg); }
+  .particle:nth-child(7) { left: 60%; top: 30%; animation-delay: 6s; filter: hue-rotate(270deg); }
+  .particle:nth-child(8) { left: 40%; top: 90%; animation-delay: 7s; filter: hue-rotate(315deg); }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-20px) rotate(5deg); }
+    50% { transform: translateY(-40px) rotate(-5deg); }
+    75% { transform: translateY(-20px) rotate(3deg); }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Logo animado */
+  .animated-logo {
+    font-size: 5rem;
+    background: linear-gradient(45deg, #ffd700, #ff6b6b, #4ecdc4, #45b7d1);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 2rem;
+    animation: bounceEnhanced 3s ease-in-out infinite, gradientShift 4s ease-in-out infinite;
+    display: inline-block;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes bounceEnhanced {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    10% {
+      transform: translateY(-5px) scale(1.05);
+    }
+    40% {
+      transform: translateY(-20px) scale(1.1);
+    }
+    60% {
+      transform: translateY(-10px) scale(1.05);
+    }
+  }
+
+  .hero-title {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-family: 'Poppins', sans-serif;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    animation: slideInLeft 1s ease-out 0.3s both;
+  }
+
+  .hero-subtitle {
+    font-size: 1.5rem;
+    background: linear-gradient(90deg, #ffd700, #ff8a80, #81c784);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    animation: slideInRight 1s ease-out 0.5s both;
+  }
+
+  .hero-description {
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+    animation: fadeIn 1s ease-out 0.7s both;
+  }
+
+  .hero-availability {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 3rem;
+    animation: fadeIn 1s ease-out 0.9s both;
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: slideInUp 1s ease-out 1.1s both;
+  }
+
+  .btn-primary-custom {
+    background: linear-gradient(45deg, #ffffff, #f8f9ff, #e3f2fd);
+    border: none;
+    color: var(--brand-bg-2);
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3), 0 0 20px rgba(129, 199, 132, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary-custom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(129, 199, 132, 0.3), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-primary-custom:hover::before {
+    left: 100%;
+  }
+
+  .btn-primary-custom:hover {
+    background: linear-gradient(45deg, #f0f8ff, #e1f5fe, #81c784);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4), 0 0 30px rgba(129, 199, 132, 0.5);
+    color: var(--brand-bg-2);
+    text-decoration: none;
+  }
+
+  .btn-primary-custom:active {
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  .btn-secondary-custom {
+    background: transparent;
+    border: 2px solid #cccccc;
+    color: #cccccc;
+    padding: 10px 28px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .btn-secondary-custom:hover {
+    background: #cccccc;
+    color: #1a1a1a;
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+
+  /* Efectos de fondo */
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(78, 205, 196, 0.08) 0%, transparent 30%),
+      radial-gradient(circle at 70% 60%, rgba(138, 43, 226, 0.05) 0%, transparent 40%);
+    z-index: 1;
+    animation: backgroundPulse 8s ease-in-out infinite;
+  }
+
+  @keyframes backgroundPulse {
+    0%, 100% { opacity: 1; }
+    25% { opacity: 0.7; }
+    50% { opacity: 0.9; }
+    75% { opacity: 0.6; }
+  }
+
+  /* Animaciones adicionales */
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.2rem;
+    }
+    
+    .hero-description, .hero-availability {
+      font-size: 1rem;
+    }
+    
+    .animated-logo {
+      font-size: 3rem;
+    }
+    
+    .hero-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .btn-primary-custom, .btn-secondary-custom {
+      width: 250px;
+      justify-content: center;
+    }
+  }
+
+  /* Ajustar el main container */
+  main.container {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+</style>
+
+<div class="hero-section">
+  <!-- Sección: Partículas -->
+  <div class="particles">
+    <div class="particle">🍽️</div>
+    <div class="particle">🥄</div>
+    <div class="particle">🍳</div>
+    <div class="particle">🔪</div>
+    <div class="particle">🥗</div>
+    <div class="particle">🧄</div>
+    <div class="particle">🌿</div>
+    <div class="particle">🥘</div>
+  </div>
+
+  <div class="hero-content">
+    <!-- Sección: Logo -->
+    <div class="animated-logo">
+      👨‍🍳
+    </div>
+    <!-- Sección: Título -->
+    <h1 class="hero-title">EasyFood</h1>
+
+    <!-- Sección: Subtítulo -->
+    <p class="hero-subtitle">Recetas Deliciosas al Alcance de Todos</p>
+
+    <!-- Sección: Descripción -->
+    <p class="hero-description">
+      Descubre, comparte y guarda tus recetas favoritas en un solo lugar.
+    </p>
+    <p class="hero-availability">
+      ¡Cocina como un chef profesional!
+    </p>
+    
+    <!-- Sección: Botones -->
+    <div class="hero-buttons">
+      <a href="{% url 'recipes:list' %}" class="btn-primary-custom">
+        📚 Ver Recetas
+      </a>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

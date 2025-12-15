@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recetas</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style/site.css' %}">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-custom">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'recipes:home' %}">
+          <span class="brand-emoji">👨‍🍳</span>
+          <span>EasyFood</span>
+        </a>
+
+        <form method="get" action="{% url 'recipes:list' %}" class="d-none d-md-flex nav-search mx-3" role="search">
+          <input name="q" class="form-control form-control-sm me-2" type="search" placeholder="Buscar por nombre, ingredientes o tiempo (ej: 'pollo 10-20')" aria-label="Buscar" value="{{ q|default_if_none:'' }}">
+          <button class="btn btn-light btn-search btn-sm" type="submit"><i class="bi bi-search"></i></button>
+        </form>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="#navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+            <li class="nav-item"><a class="nav-link" href="{% url 'recipes:list' %}">Catálogo</a></li>
+            <li class="nav-item"><a class="nav-link" href="/recipe/add/">Añadir</a></li>
+            {% if user.is_authenticated %}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                  <li><a class="dropdown-item" href="#">Perfil</a></li>
+                  <li><a class="dropdown-item" href="{% url 'recipes:my_recipes' %}">Mis recetas</a></li>
+                  <li><a class="dropdown-item" href="{% url 'recipes:saved_list' %}">Mis guardadas</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="{% url 'recipes:logout' %}">Cerrar sesión</a></li>
+                </ul>
+              </li>
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'recipes:login' %}">Iniciar sesión</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'recipes:register' %}">Registrarse</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container mt-4">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      async function postRating(url, value){
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+          body: new URLSearchParams({rating: value})
+        });
+        return resp.json();
+      }
+
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+    </script>
+  </body>
+</html>

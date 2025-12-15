@@ -1,0 +1,60 @@
+{% extends 'recipes/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title mb-3 text-center">Crear una cuenta</h3>
+        <p class="text-center text-muted">Regístrate para guardar recetas, valorarlas y más.</p>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+
+          <div class="mb-3">
+            <label class="form-label">Nombre de usuario</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              {{ form.username }}
+            </div>
+            <div class="form-text text-danger">{{ form.username.errors }}</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Correo electrónico</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+              {{ form.email }}
+            </div>
+            <div class="form-text text-danger">{{ form.email.errors }}</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              {{ form.password1 }}
+            </div>
+            <div class="form-text text-danger">{{ form.password1.errors }}</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Confirmar contraseña</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+              {{ form.password2 }}
+            </div>
+            <div class="form-text text-danger">{{ form.password2.errors }}</div>
+          </div>
+
+          <div class="d-grid">
+            <button class="btn btn-success btn-lg" type="submit">Crear cuenta</button>
+          </div>
+        </form>
+        <hr>
+        <p class="mb-0">¿Ya tienes cuenta? <a href="{% url 'recipes:login' %}">Inicia sesión</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

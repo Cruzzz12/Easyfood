@@ -1,0 +1,209 @@
+{% extends 'recipes/base.html' %}
+
+{% block content %}
+<div class="recipes-header">
+  <div class="container">
+    <div class="row align-items-center mb-4">
+      <div class="col-lg-8">
+        <h1 class="recipes-title mb-2">📚 Recetas Recomendadas</h1>
+        <p class="recipes-subtitle mb-0">Descubre deliciosas recetas creadas por nuestra comunidad</p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        {% if user.is_authenticated %}
+          <a href="/recipe/add/" class="btn-add-recipe">
+            ✨ Añadir Receta
+          </a>
+        {% else %}
+          <a href="{% url 'recipes:login' %}" class="btn-login-prompt" title="Debes iniciar sesión para añadir recetas">
+            🔐 Inicia Sesión para Añadir
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="filter-card">
+      <form method="get" class="d-flex align-items-center flex-wrap gap-3">
+        <label class="form-label mb-0 text-white fw-bold">🔍 Filtrar por calificación:</label>
+        <select name="min_rating" class="form-select filter-select">
+          <option value="">-- Cualquiera --</option>
+          {% for v in rating_choices %}
+            <option value="{{ v }}" {% if min_rating and min_rating|stringformat:"s" == v|stringformat:"s" %}selected{% endif %}>{{ v }}⭐ o más</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-light fw-bold">
+          🎯 Aplicar Filtro
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="row gy-4">
+    {% for r in recipes %}
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="recipe-card">
+        {% if r.image %}
+        <div class="recipe-image-container">
+          <img src="{{ r.image.url }}" alt="{{ r.title }}" class="recipe-image">
+          <div class="recipe-image-overlay"></div>
+        </div>
+        {% endif %}
+        
+        <div class="recipe-content">
+          <h3 class="recipe-title">
+            <a href="{% url 'recipes:detail' r.pk %}">{{ r.title }}</a>
+          </h3>
+          
+          <p class="recipe-description">
+            {{ r.description|striptags|truncatewords:20 }}
+          </p>
+          
+          <div class="recipe-meta">
+            {% if r.estimated_time %}
+            <div class="recipe-meta-item">
+              <i class="bi bi-clock"></i>
+              {{ r.estimated_time }} min
+            </div>
+            {% endif %}
+            
+            <div class="recipe-meta-item">
+              <i class="bi bi-person"></i>
+              {% if r.author %}{{ r.author.username }}{% else %}Anónimo{% endif %}
+            </div>
+            
+            {% if r.ingredients.count > 0 %}
+            <div class="recipe-meta-item">
+              <i class="bi bi-list-ul"></i>
+              {{ r.ingredients.count }} ingredientes
+            </div>
+            {% endif %}
+          </div>
+          
+          {% if r.ingredients.all %}
+          <div class="recipe-ingredients mb-3">
+            <small class="text-muted">
+              <strong>Ingredientes:</strong> 
+              {% for i in r.ingredients.all|slice:":4" %}
+                {{ i.name }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+              {% if r.ingredients.count > 4 %}...{% endif %}
+            </small>
+          </div>
+          {% endif %}
+          
+          <div class="mt-auto">
+            <a href="{% url 'recipes:detail' r.pk %}" class="btn btn-outline-primary btn-sm rounded-pill">
+              📖 Ver Receta Completa
+            </a>
+          </div>
+        </div>
+        
+        <!-- Sección: Rating -->
+        <div class="recipe-rating">
+          <div class="star-rating" data-pk="{{ r.pk }}">
+            {% if r.avg_rating %}
+              {% for v in rating_choices %}
+                {% if r.avg_rating >= v %}
+                  <i class="bi bi-star-fill"></i>
+                {% else %}
+                  <i class="bi bi-star"></i>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <small class="text-muted">Sin valorar</small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="no-recipes-card">
+        <div class="no-recipes-icon">📋</div>
+        <h3>No se encontraron recetas</h3>
+        <p class="mb-3">Parece que no hay recetas que coincidan con tu búsqueda.</p>
+        {% if user.is_authenticated %}
+          <a href="/recipe/add/" class="btn-add-recipe">
+            ✨ Sé el primero en añadir una receta
+          </a>
+        {% else %}
+          <a href="{% url 'recipes:login' %}" class="btn-login-prompt">
+            🔐 Inicia sesión para añadir recetas
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <!-- Pagination -->
+  <div class="row mt-4">
+    <div class="col-12 d-flex justify-content-center">
+      <nav aria-label="Paginación recetas">
+        <div class="d-flex align-items-center gap-3">
+          <small class="text-muted">Página {{ recipes.number }} de {{ recipes.paginator.num_pages }}</small>
+          <ul class="pagination mb-0">
+            {% if recipes.has_previous %}
+              <li class="page-item">
+                <a class="page-link" rel="prev" href="?page={{ recipes.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}">Anterior</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            {% for num in recipes.paginator.page_range %}
+              {# show first/last or a small window around the current page #}
+              {% if num == 1 or num == recipes.paginator.num_pages %}
+                {% if recipes.number == num %}
+                  <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+              {% elif num >= recipes.number|add:'-2' and num <= recipes.number|add:'2' %}
+                {% if recipes.number == num %}
+                  <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+              {% elif num == 2 and recipes.number > 4 %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+              {% elif num == recipes.paginator.num_pages|add:'-1' and recipes.number < recipes.paginator.num_pages|add:'-3' %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+              {% endif %}
+            {% endfor %}
+
+            {% if recipes.has_next %}
+              <li class="page-item">
+                <a class="page-link" rel="next" href="?page={{ recipes.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}">Siguiente</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+            {% endif %}
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Footer / Contacto al final de la página de listado -->
+  <div class="row mt-5">
+    <div class="col-12">
+        <footer class="p-4 rounded site-footer">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start">
+          <div>
+              <h5 class="footer-title">Contacto EasyFood</h5>
+            <p class="mb-1 text-muted">¿Dudas o soporte? Escríbenos y te ayudamos.</p>
+            <p class="mb-0"><strong>Correo:</strong> <a href="mailto:soporte@easyfood.example">soporte@easyfood.example</a></p>
+            <p class="mb-0"><strong>Teléfono:</strong> <a href="tel:+34123456789">+34 123 456 789</a></p>
+          </div>
+          <div class="mt-3 mt-md-0 text-md-end">
+              <h6 class="footer-subtitle">Servicio al cliente</h6>
+            <p class="mb-0 text-muted">Horario: Lun–Vie 9:00–18:00</p>
+            <p class="mb-0"><a href="#" class="text-decoration-none">Centro de ayuda</a> · <a href="#" class="text-decoration-none">Política de devoluciones</a></p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+</div>
+{% endblock %}
