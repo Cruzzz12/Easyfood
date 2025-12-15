@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -50,14 +51,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'recipes_project.wsgi.application'
 
 DATABASES = {
-    'default': dj_database_url.parse(os.environ.get('DATABASE_URL')) {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'recetas_db',
-        'USER': 'recetas_user',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.parse(
+        os.environ.get('DATABASE_URL')
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = []
