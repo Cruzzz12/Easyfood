@@ -11,8 +11,7 @@ def load_initial_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        # Asegúrate de que esta dependencia sea la migración anterior a esta
-        # (Ejemplo: '0001_initial' o la última migración de tablas que tengas)
+        ('recipes', '0007_recipestep'),
     ]
 
     operations = [
